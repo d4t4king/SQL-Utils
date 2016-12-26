@@ -21,24 +21,58 @@ our @ISA = qw(Exporter);
 # This allows declaration	use SQL::Utils ':all';
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(
-	
-) ] );
+our %EXPORT_TAGS	= ( 'all' => [ qw( ) ] );
 
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+our @EXPORT_OK		= ( @{ $EXPORT_TAGS{'all'} } );
 
-our @EXPORT = qw(
-	
-);
+our @EXPORT			= qw( );
 
-our $VERSION = '0.01';
-
-	# Useable options: sqlite3, mssql, mysql
-	$attrs{'rdbms'} = 'sqlite3';
-	
-	my $self = \%attrs;
+our $VERSION		= '0.01';
 
 # Preloaded methods go here.
+
+my %db_types = (
+	'sqlite3'	=>	'SQLite',
+	'mysql'		=>	'mysql',
+	'mssql'		=>	'MSSQL',
+);
+
+sub new {
+	my $class	= shift;
+	my $rdbms	= shift;
+	my $params	= shift;
+	my %attrs;
+	given ($rdbms) {
+		when ('sqlite3') {
+			$attrs{'db_filename'} = $params{'filename'};
+		}
+		when (/^m[sy]sql$/) {
+			$attrs{'db'} = $params{'db'};
+			$attrs{'user'} = $params{'user'} or die "Must specify user with $rdbms database types.";
+			$attrs{'pass'} = $params{'pass'} or die "Must specify password with $rdbms database types.";
+			$attrs{'host'} = $params{'host'} or die "Must specify host with $rdbms database types.";
+		}
+		default { die "Unrecognized database type."; }
+	}
+	
+	my $self = \%attrs;
+	
+	bless $self, $class;
+
+	return $self;
+}
+
+sub execute_non_query {
+	my $self = shift;
+	my $sql = shift;
+	my $db;
+	if ($self->{'rdbms'} eq 'sqlite3') {
+		$db = DBI->connect("dbi:$db_types{$self->{'rdbms'}}:$self->{'db_filename'}", "$user", "$pass") or die "Can't connect to database: $DBI::errstr";
+	}
+	my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
+	my $rtv = $sth->execute or die "Can't execute statement: $DBI::errstr";
+	return $rtv;
+}
 
 1;
 __END__
