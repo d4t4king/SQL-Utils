@@ -37,20 +37,25 @@ my %db_types = (
 	'mssql'		=>	'MSSQL',
 );
 
+#END {
+#	if ($sth) { $sth->finished; }
+#	if ($db)  { $db->close;     }
+#}
+
 sub new {
 	my $class	= shift;
-	my $rdbms	= shift;
-	my $params	= shift;
 	my %attrs;
-	given ($rdbms) {
+	$attrs{'rdbms'}	= shift;
+	my $params	= shift;
+	given ($attrs{'rdbms'}) {
 		when ('sqlite3') {
-			$attrs{'db_filename'} = $params{'filename'};
+			$attrs{'db_filename'} = $params->{'db_filename'};
 		}
 		when (/^m[sy]sql$/) {
-			$attrs{'db'} = $params{'db'};
-			$attrs{'user'} = $params{'user'} or die "Must specify user with $rdbms database types.";
-			$attrs{'pass'} = $params{'pass'} or die "Must specify password with $rdbms database types.";
-			$attrs{'host'} = $params{'host'} or die "Must specify host with $rdbms database types.";
+			$attrs{'db'} = $params->{'db'};
+			$attrs{'user'} = $params->{'user'} or die "Must specify user with $attrs{'rdbms'} database types.";
+			$attrs{'pass'} = $params->{'pass'} or die "Must specify password with $attrs{'rdbms'} database types.";
+			$attrs{'host'} = $params->{'host'} or die "Must specify host with $attrs{'rdbms'} database types.";
 		}
 		default { die "Unrecognized database type."; }
 	}
@@ -67,14 +72,46 @@ sub execute_non_query {
 	my $sql = shift;
 	my $db;
 	if ($self->{'rdbms'} eq 'sqlite3') {
-		$db = DBI->connect("dbi:$db_types{$self->{'rdbms'}}:$self->{'db_filename'}", "$user", "$pass") or die "Can't connect to database: $DBI::errstr";
+		$db = DBI->connect("dbi:$db_types{$self->{'rdbms'}}:$self->{'db_filename'}", "", "") or die "Can't connect to database: $DBI::errstr";
 	}
 	my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
 	my $rtv = $sth->execute or die "Can't execute statement: $DBI::errstr";
 	return $rtv;
 }
 
+sub execute_single_row_query {
+	my $self = shift;
+	my $sql = shift;
+	my ($db, $results);
+	if ($self->{'rdbms'} eq 'sqlite3') {
+		$db = DBI->connect("dbi:$db_types{$self->{'rdbms'}}:$self->{'db_filename'}", "", "") or die "Can't connect to database: $DBI::errstr";
+	}
+	my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
+	while (my $row = $sth->fetchrow_hashref()) {
+		#print Dumper($row);
+		$results = $row;
+	}
+	return $results;
+}
+
+sub execute_multi_row_query {
+	my $self = shift;
+	my $sql = shift;
+	my ($db, $results);
+	if ($self->{'rdbms'} eq 'sqlite3') {
+		$db = DBI->connect("dbi:$db_types{$self->{'rdbms'}}:$self->{'db_filename'}", "", "") or die "Can't connect to database: $DBI::errstr";
+	}
+	my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
+	while (my $row = $sth->fetchrow_hashref()) {
+		#print Dumper($row);
+		push $results, $row;
+	}
+	return $results;
+}
+
 1;
+
+
 __END__
 # Below is stub documentation for your module. You'd better edit it!
 
