@@ -79,6 +79,27 @@ sub execute_non_query {
 	return $rtv;
 }
 
+sub execute_atomic_int_query {
+	my $self = shift;
+	my $sql = shift;
+	my ($db,$int);
+	$int = 0;
+	if ($self->{'rdbms'} eq 'sqlite3') {
+		$db = DBI->connect("dbi:$db_types{$self->{'rdbms'}}:$self->{'db_filename'}", "", "") or die "Can't connect to database: $DBI::errstr";
+		my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
+		my $rc = $sth->execute() or die "Can't execute statement: $DBI::errstr";
+		while (my @row = $sth->fetchrow_array()) {
+			$int = $row[0] if (defined($row[0]));
+			last;
+		}
+		$sth->finish or die "There was a problem closing out the statement handle: $!";
+		$db->disconnect;
+		return int($int);
+	} else {
+		die "Don't know how to handle this RDBMS (".$self->{'rdbms'}.") yet.";
+	}
+}
+
 sub execute_single_row_query {
 	my $self = shift;
 	my $sql = shift;
@@ -113,6 +134,7 @@ sub execute_multi_row_query {
 
 
 __END__
+### FIX ME!!!
 # Below is stub documentation for your module. You'd better edit it!
 
 =head1 NAME
