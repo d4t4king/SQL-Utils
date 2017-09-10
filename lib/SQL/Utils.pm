@@ -10,6 +10,8 @@ use warnings;
 use Exporter;
 use DBI;
 
+no if $] ge '5.018', warnings => "experimental::smartmatch";
+
 require Exporter;
 
 our @ISA = qw(Exporter);
@@ -125,7 +127,7 @@ sub execute_multi_row_query {
 	my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
 	while (my $row = $sth->fetchrow_hashref()) {
 		#print Dumper($row);
-		push $results, $row;
+		push @{$results}, $row;
 	}
 	return $results;
 }
