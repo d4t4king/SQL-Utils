@@ -127,7 +127,6 @@ sub execute_multi_row_query {
 	my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
 	my $rtv = $sth->execute();
 	while (my $row = $sth->fetchrow_hashref()) {
-		print Dumper($row);
 		push @{$results}, $row;
 	}
 	return $results;
