@@ -125,8 +125,9 @@ sub execute_multi_row_query {
 		$db = DBI->connect("dbi:$db_types{$self->{'rdbms'}}:$self->{'db_filename'}", "", "") or die "Can't connect to database: $DBI::errstr";
 	}
 	my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
+	my $rtv = $sth->execute();
 	while (my $row = $sth->fetchrow_hashref()) {
-		#print Dumper($row);
+		print Dumper($row);
 		push @{$results}, $row;
 	}
 	return $results;
