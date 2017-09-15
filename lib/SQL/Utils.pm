@@ -110,7 +110,7 @@ sub execute_single_row_query {
 		$db = DBI->connect("dbi:$db_types{$self->{'rdbms'}}:$self->{'db_filename'}", "", "") or die "Can't connect to database: $DBI::errstr";
 	}
 	my $sth = $db->prepare($sql) or die "Can't prepare statement: $DBI::errstr";
-	my $rtv = $sthg->execute() or die $DBI::errstr;
+	my $rtv = $sth->execute() or die $DBI::errstr;
 	while (my $row = $sth->fetchrow_hashref()) {
 		#print Dumper($row);
 		$results = $row;
